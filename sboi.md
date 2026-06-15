@@ -42,9 +42,9 @@ classDiagram
         -Convert(List~Dictionary~string, object~~ devices) List~Device~$
     }
 
-    Failure --> FailureType : Ассоциация (содержит тип сбоя)
-    ReportMaker ..> Failure : Зависимость (принимает и создаёт в методах)
-    ReportMaker ..> Device : Зависимость (принимает и конвертирует)
+    Failure --> FailureType : Ассоциация (классифицирует по типу)
+    ReportMaker ..> Failure : Зависимость (анализирует сбои)
+    ReportMaker ..> Device : Зависимость (анализирует устройства)
 ```
 
 
