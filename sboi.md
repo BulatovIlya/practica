@@ -11,40 +11,44 @@
 
 ```mermaid
 classDiagram
-    class FailureType {
-        <<enumeration>>
-        UnexpectedShutdown = 0
-        ShortNonResponding = 1
-        HardwareFailures = 2
-        ConnectionProblems = 3
-    }
+    direction RL
 
-    class Failure {
-        +FailureType Type
-        +int DeviceId
-        +DateTime Date
-        +bool IsSerious
-        +Failure()
-        +Failure(FailureType type, int deviceId, DateTime date)
+    class FailureType {
+        <<enum>>
+        UnexpectedShutdown
+        Freeze
+        HardwareMalfunction
+        ConnectionProblems
     }
 
     class Device {
-        +int Id
-        +string Name
+        +int Id 
+        +string? Name 
         +Device()
-        +Device(int id, string name)
+        +СhecktValidDevice() bool
+    }
+
+    class Failure {
+        +FailureType Type 
+        +int DeviceId 
+        +DateTime Date 
+        +bool IsSerious$
+        +Failure()
+        +WasBefore(DateTime deadline) bool
+        +IsInCurrentYear() bool
     }
 
     class ReportMaker {
-        -ReportMaker()
-        +FindDevicesFailedBeforeDate(DateTime beforeDate, List~Failure~ failures, List~Device~ devices) List~string~$
-        +FindDevicesFailedBeforeDateObsolete(int day, int month, int year, int[] failureTypes, int[] deviceId, object[][] times, List~Dictionary~string, object~~ devices) List~string~$
-        -Convert(List~Dictionary~string, object~~ devices) List~Device~$
+        +FindDevicesFailedBeforeDateObsolete(int day, int month, int year, int[] failureTypes, int[] deviceId, object[][] times, List~Dictionary~string, object~~ devices)$ List~string~
+        +FindDevicesFailedBeforeDate(DateTime deadline, IReadOnlyCollection~Failure~ registry, IReadOnlyCollection~Device~ inventory)$ List~string~
+        +GetRecentCriticalDeviceIds(IReadOnlyCollection~Failure~ registry)$ List~int~
+        -TransformData(List~Dictionary~string, object~~ rawData)$ List~Device~
     }
 
+    ReportMaker ..> Device : Зависимость (анализирует устройства)
     Failure --> FailureType : Ассоциация (классифицирует по типу)
     ReportMaker ..> Failure : Зависимость (анализирует сбои)
-    ReportMaker ..> Device : Зависимость (анализирует устройства)
+    
 ```
 
 
