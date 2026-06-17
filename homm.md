@@ -1,41 +1,47 @@
 # Практика: HoMM
 
 ## 1. Описание предметной области и сущностей
-Игрок выполняет роль главного герия, который перемещается по карте для захвата объектов и ресурсов. Игрок может умерет. 
+Игрок выполняет роль главного героя, который перемещается по карте для захвата объектов и ресурсов. Игрок может умерет. 
 Каждый игрок имеет свой Id.    
-**ICouldbecapturable** — интерфейс объектов, которые можно захватить    
-**ICanfightable** — интерфейс объектов, которые защищает армия    
-**IKeeptresures** — интерфейс объектов, которые содержат сокровища    
-**Player** — класс игрока. Содержит методы проверкуи исхода боя, сбора ресурсов и гибели      
-**Army** — класс войск    
+**IOwnable** — интерфейс объектов, которые могут иметь владельца (можно захватить)      
+**ICombatant** — интерфейс объектов, обладающих армией (с ними можно сразиться)       
+**ITreasurable** — интерфейс объектов, содержащих внутри себя сокровища/ресурсы     
+**Player** — класс игрока. Содержит уникальный идентификатор Id, а также методы для проверки исхода боя, сбора ресурсов и гибели        
+**Army** — класс войск        
 **Treasure** — класс ресурсов    
-**MapObjectExtensions** - класс, который содержит методы расширения для взаимодействия    
-**Interaction** — класс, в котором выполняется логика взаимодействия      
-**Dwelling** - класс жилища, которое можно захватить      
-**Mine**  — класс шахты, которая имеет охрану, ресурсы и возможность захвата    
-**Creeps** - класс монстров, которые содержат сокровища и имеют армию    
-**Wolves** - класс волков, м ними можно тоько сразиться    
-**ResourcePile** - куча ресурсов, которую можно собрать не сражаясь    
+**Interaction** — класс, запускающий поочередную цепочку шагов взаимодействия игрока с объектом на карте    
+**IInteractionStep** — интерфейс одного шага взаимодействия    
+**Dwelling** — класс жилища    
+**Mine** — класс шахты. Имеет охрану, приносит ресурсы и может быть захвачена    
+**Creeps** — класс нейтральных монстров, которые охраняют сокровища    
+**Wolves** — класс волков, с которыми можно только сразиться (не охраняют ресурсы, нельзя захватить)    
+**ResourcePile** — куча ресурсов, которую можно собрать без боя    
 
 ## 2. Диаграмма классов (Mermaid)
 
 ```mermaid
 classDiagram
-    class ICouldbecapturable {
+    class IOwnable {
         <<interface>>
         +int Owner
     }
-    class ICanfightable {
+    class ICombatant {
         <<interface>>
         +Army Army
     }
-    class IKeeptresures {
+    class ITreasurable {
         <<interface>>
         +Treasure Treasure
     }
 
     class Dwelling {
         +int Owner
+    }
+    class Wolves {
+        +Army Army
+    }
+    class ResourcePile {
+        +Treasure Treasure
     }
     class Mine {
         +int Owner
@@ -46,60 +52,58 @@ classDiagram
         +Army Army
         +Treasure Treasure
     }
-    class Wolves {
-        +Army Army
+
+    class IInteractionStep {
+        <<interface>>
+        +Process~T~(Player player, T target) bool
     }
-    class ResourcePile {
-        +Treasure Treasure
+    class CombatStep {
+        +Process~T~(Player player, T target) bool
+    }
+    class TreasureStep {
+        +Process~T~(Player player, T target) bool
+    }
+    class OwnerStep {
+        +Process~T~(Player player, T target) bool
+    }
+
+    class Interaction {
+        <<static>>
+        -List~IInteractionStep~ Steps
+        +Make~T~(Player player, T mapObject) void
     }
 
     class Army
     class Treasure
-    class Player {
-        +int Id
-        +CanBeat(Army army) bool
-        +Consume(Treasure treasure) void
-        +Die() void
-    }
-
-    class MapObjectExtensions {
-        <<static>>
-        +TryBattle~T~(this T mapObject, Player player) bool
-        +TryGiveTreasure~T~(this T mapObject, Player player) void
-        +TryCapture~T~(this T mapObject, Player player) void
-    }
-    class Interaction {
-        <<static>>
-        +Make~T~(Player player, T mapObject) void
-    }
-
-    ICouldbecapturable <|.. Dwelling : Реализация
-    ICouldbecapturable <|.. Mine : Реализация
-    ICanfightable <|.. Mine : Реализация
-    IKeeptresures <|.. Mine : Реализация
-    ICanfightable <|.. Creeps : Реализация
-    IKeeptresures <|.. Creeps : Реализация
-    ICanfightable <|.. Wolves : Реализация
-    IKeeptresures <|.. ResourcePile : Реализация
-
-    ICanfightable --> Army : Ассоциация 
-    IKeeptresures --> Treasure : Ассоциация 
-    Mine --> Army : Ассоциация
-    Mine --> Treasure : Ассоциация
-    Creeps --> Army : Ассоциация
-    Creeps --> Treasure : Ассоциация
-    Wolves --> Army : Ассоциация
-    ResourcePile --> Treasure : Ассоциация
+    class Player
 
     
-    Interaction ..> Player : Зависимость 
-    Interaction ..> MapObjectExtensions : Зависимость 
+    IOwnable <|.. Dwelling : 
+    ICombatant <|.. Wolves : Реализация интерфейса
+    ITreasurable <|.. ResourcePile : Реализация интерфейса
     
-    MapObjectExtensions ..> Player : Зависимость 
-    MapObjectExtensions ..> ICanfightable : Зависимость 
-    MapObjectExtensions ..> IKeeptresures : Зависимость 
-    MapObjectExtensions ..> ICouldbecapturable : Зависимость 
+    IOwnable <|.. Mine : Реализация интерфейса
+    ICombatant <|.. Mine : Реализация интерфейса
+    ITreasurable <|.. Mine : Реализация интерфейса
     
-    Player ..> Army : Зависимость 
-    Player ..> Treasure : Зависимость 
+    ICombatant <|.. Creeps : Реализация интерфейса
+    ITreasurable <|.. Creeps : Реализация интерфейса
+
+    IInteractionStep <|.. CombatStep : Реализация интерфейса
+    IInteractionStep <|.. TreasureStep : Реализация интерфейса
+    IInteractionStep <|.. OwnerStep : Реализация интерфейса
+
+ 
+    Interaction *-- IInteractionStep : Композиция 
+
+    ICombatant --> Army : Ассоциация
+    ITreasurable --> Treasure : Ассоциация
+
+    Interaction ..> Player : Зависимость
+    CombatStep ..> Player : Зависимость
+    CombatStep ..> ICombatant : Зависимость
+    TreasureStep ..> Player : Зависимость
+    TreasureStep ..> ITreasurable : Зависимость
+    OwnerStep ..> Player : Зависимость
+    OwnerStep ..> IOwnable : Зависимость
 ```
