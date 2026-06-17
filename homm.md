@@ -6,11 +6,12 @@
 **ICouldbecapturable** — интерфейс объектов, которые можно захватить    
 **ICanfightable** — интерфейс объектов, которые защищает армия    
 **IKeeptresures** — интерфейс объектов, которые содержат сокровища    
-**Player** — класс игрока, может сражаться, захватывать и умирать    
+**Player** — класс игрока. Содержит методы проверкуи исхода боя, сбора ресурсов и гибели      
 **Army** — класс войск    
 **Treasure** — класс ресурсов    
-**Interaction** — класс, в котором выполняется вся логика    
-**Dwelling** - класс жилища, которое можно захватить    
+**MapObjectExtensions** - класс, который содержит методы расширения для взаимодействия    
+**Interaction** — класс, в котором выполняется логика взаимодействия      
+**Dwelling** - класс жилища, которое можно захватить      
 **Mine**  — класс шахты, которая имеет охрану, ресурсы и возможность захвата    
 **Creeps** - класс монстров, которые содержат сокровища и имеют армию    
 **Wolves** - класс волков, м ними можно тоько сразиться    
@@ -20,31 +21,14 @@
 
 ```mermaid
 classDiagram
-    direction TB
-
-    class Player {
-        +int Id
-        +CanBeat(Army army) bool
-        +Consume(Treasure treasure) void
-        +Die() void
-    }
-
-    class Army {
-    }
-
-    class Treasure {
-    }
-
     class ICouldbecapturable {
         <<interface>>
         +int Owner
     }
-
     class ICanfightable {
         <<interface>>
         +Army Army
     }
-
     class IKeeptresures {
         <<interface>>
         +Treasure Treasure
@@ -53,57 +37,69 @@ classDiagram
     class Dwelling {
         +int Owner
     }
-
     class Mine {
         +int Owner
         +Army Army
         +Treasure Treasure
     }
-
     class Creeps {
         +Army Army
         +Treasure Treasure
     }
-
     class Wolves {
         +Army Army
     }
-
     class ResourcePile {
         +Treasure Treasure
     }
 
-    class Interaction {
-        <<static>>
-        +Make(Player player, object mapObject)$ void
-        -IsPlayerDefeated(Player activePlayer, object targetLocation)$ bool
-        -ProcessRewardsAndCapture(Player activePlayer, object targetLocation)$ void
+    class Army
+    class Treasure
+    class Player {
+        +int Id
+        +CanBeat(Army army) bool
+        +Consume(Treasure treasure) void
+        +Die() void
     }
 
-    ICouldbecapturable <|.. Dwelling : Реализация интерфейса
-    ICouldbecapturable <|.. Mine : Реализация интерфейса
-    ICanfightable <|.. Mine : Реализация интерфейса
-    IKeeptresures <|.. Mine : Реализация интерфейса
-    ICanfightable <|.. Creeps : Реализация интерфейса
-    IKeeptresures <|.. Creeps : Реализация интерфейса
-    ICanfightable <|.. Wolves : Реализация интерфейса
-    IKeeptresures <|.. ResourcePile : Реализация интерфейса
+    class MapObjectExtensions {
+        <<static>>
+        +TryBattle~T~(this T mapObject, Player player) bool
+        +TryGiveTreasure~T~(this T mapObject, Player player) void
+        +TryCapture~T~(this T mapObject, Player player) void
+    }
+    class Interaction {
+        <<static>>
+        +Make~T~(Player player, T mapObject) void
+    }
 
+    ICouldbecapturable <|.. Dwelling : Реализация
+    ICouldbecapturable <|.. Mine : Реализация
+    ICanfightable <|.. Mine : Реализация
+    IKeeptresures <|.. Mine : Реализация
+    ICanfightable <|.. Creeps : Реализация
+    IKeeptresures <|.. Creeps : Реализация
+    ICanfightable <|.. Wolves : Реализация
+    IKeeptresures <|.. ResourcePile : Реализация
 
-    ICanfightable o-- Army : Агрегация
-    IKeeptresures o-- Treasure : Агрегация
-    Mine o-- Army : Агрегация
-    Mine o-- Treasure : Агрегация
-    Creeps o-- Army : Агрегация
-    Creeps o-- Treasure : Агрегация
-    Wolves o-- Army : Агрегация
-    ResourcePile o-- Treasure : Агрегация
+    ICanfightable --> Army : Ассоциация 
+    IKeeptresures --> Treasure : Ассоциация 
+    Mine --> Army : Ассоциация
+    Mine --> Treasure : Ассоциация
+    Creeps --> Army : Ассоциация
+    Creeps --> Treasure : Ассоциация
+    Wolves --> Army : Ассоциация
+    ResourcePile --> Treasure : Ассоциация
 
-    Interaction ..> Player : Зависимость
-    Interaction ..> IsPlayerDefeated : Зависимость (проверка боя)
-    Interaction ..> ProcessRewardsAndCapture : Зависимость (проверка можно ли захватить или забрать награду)
-     
-    IsPlayerDefeated ..> ICanfightable : Зависимость
-    ProcessRewardsAndCapture ..> IKeeptresures : Зависимость
-    ProcessRewardsAndCapture ..> ICouldbecapturable : Зависимость
+    
+    Interaction ..> Player : Зависимость 
+    Interaction ..> MapObjectExtensions : Зависимость 
+    
+    MapObjectExtensions ..> Player : Зависимость 
+    MapObjectExtensions ..> ICanfightable : Зависимость 
+    MapObjectExtensions ..> IKeeptresures : Зависимость 
+    MapObjectExtensions ..> ICouldbecapturable : Зависимость 
+    
+    Player ..> Army : Зависимость 
+    Player ..> Treasure : Зависимость 
 ```
